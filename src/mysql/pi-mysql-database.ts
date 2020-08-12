@@ -10,10 +10,7 @@ export class PiMySqlDatabase extends PiDatabase {
     constructor(private _db: mysql.Connection) {
         super();
         this.escape = _db.escape;
-        this._logger = Logger.getLogger({
-            name: 'Mysql#' + ((_db as any)._ID || 0),
-            format: Logger.Format.TEXT_NO_TIME
-        });
+        this._logger = Logger.getLogger('Mysql#' + ((_db as any)._ID || 0));
     }
 
     close(): Promise<void> {
@@ -33,12 +30,12 @@ export class PiMySqlDatabase extends PiDatabase {
 
     commit(): Promise<void> {
         return P(this._db, 'commit')
-            .then(() => this._logger.debug('committed'));
+            .then(() => this._logger.trace('committed'));
     }
 
     rollback(): Promise<void> {
         return P(this._db, 'rollback')
-            .then(() => this._logger.debug('rollback'));
+            .then(() => this._logger.trace('rollback'));
     }
 
     protected async _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {

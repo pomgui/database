@@ -45,14 +45,14 @@ export abstract class PiDatabase {
     async query(sql: string, params: object, options: PiQueryOptions = {}): Promise<any> {
         let ignored = new Set((options.ignore || []).map((i: string) => i.toLowerCase()));
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.debug(`SQL> ${sql.replace(/\s+/g, ' ')}`);
+        this._logger.trace(`SQL> ${sql.replace(/\s+/g, ' ')}`);
 
         // Execute query
         const start = Date.now();
         let results: QueryResult;
         try {
             results = await this._executeQuery(PiQueryType.select, sql, []);
-            this._logger.debug(`SQL> ${Date.now() - start}ms.`);
+            this._logger.trace(`SQL> ${Date.now() - start}ms.`);
         } catch (err) {
             this._logger.error(`SQL> ERR:`, err);
             throw err;
@@ -102,7 +102,7 @@ export abstract class PiDatabase {
     async insert(sql: string, params?: any, returnField?: string): Promise<any | any[]> {
         _assertSql('insert', sql, PiQueryType.insert);
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.debug('SQL> ', sql.replace(/\s+/g, ' '));
+        this._logger.trace('SQL> ', sql.replace(/\s+/g, ' '));
         const results: QueryResult = await this._executeQuery(PiQueryType.insert, sql, params, returnField);
         if (results.affectedRows == 1)
             return results.insertId;
@@ -121,7 +121,7 @@ export abstract class PiDatabase {
     async update(sql: string, params?: any): Promise<any> {
         _assertSql('update', sql, PiQueryType.update);
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.debug('SQL> ', sql.replace(/\s+/g, ' '));
+        this._logger.trace('SQL> ', sql.replace(/\s+/g, ' '));
         const results: QueryResult = await this._executeQuery(PiQueryType.update, sql, params);
         return results.affectedRows;
     }
@@ -134,7 +134,7 @@ export abstract class PiDatabase {
     async delete(sql: string, params?: any): Promise<any> {
         _assertSql('delete', sql, PiQueryType.delete);
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.debug('SQL> ', sql.replace(/\s+/g, ' '));
+        this._logger.trace('SQL> ', sql.replace(/\s+/g, ' '));
         const results: QueryResult = await this._executeQuery(PiQueryType.delete, sql, params);
         return results.affectedRows;
     }

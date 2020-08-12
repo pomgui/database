@@ -52,10 +52,10 @@
     "typescript": "^3.4.4"
   },
   "dependencies": {
-    "sitka": "^1.0.5"
+    "sitka": "github:pomgui/node-sitka"
   },
   "optionalDependencies": {
     "mysql": "^2.18.1",
-    "node-firebird": "^0.9.3"
+    "node-firebird": "github:pomgui/node-firebird.git"
   }
 }
