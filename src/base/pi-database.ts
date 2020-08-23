@@ -1,6 +1,6 @@
 import { column2camel, jsonSetValue } from "../tools";
 import { PiError } from "../pi-error";
-import { Logger } from 'sitka';
+import { Logger, LogLevel } from 'sitka';
 
 export type PiQueryOptions = {
     // Normally all the columns will be converted to camel-case form. Ex: 'AUTO_UPDATE' will renamed to 'autoUpdate'.
@@ -45,13 +45,12 @@ export abstract class PiDatabase {
     async query(sql: string, params: object, options: PiQueryOptions = {}): Promise<any> {
         let ignored = new Set((options.ignore || []).map((i: string) => i.toLowerCase()));
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.trace(`SQL> ${sql.replace(/\s+/g, ' ')}`);
 
         // Execute query
         const start = Date.now();
         let results: QueryResult;
         try {
-            results = await this._executeQuery(PiQueryType.select, sql, []);
+            results = await this._executeQuery(PiQueryType.select, sql, params as any);
             this._logger.trace(`SQL> ${Date.now() - start}ms.`);
         } catch (err) {
             this._logger.error(`SQL> ERR:`, err);
@@ -102,7 +101,6 @@ export abstract class PiDatabase {
     async insert(sql: string, params?: any, returnField?: string): Promise<any | any[]> {
         _assertSql('insert', sql, PiQueryType.insert);
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.trace('SQL> ', sql.replace(/\s+/g, ' '));
         const results: QueryResult = await this._executeQuery(PiQueryType.insert, sql, params, returnField);
         if (results.affectedRows == 1)
             return results.insertId;
@@ -121,7 +119,6 @@ export abstract class PiDatabase {
     async update(sql: string, params?: any): Promise<any> {
         _assertSql('update', sql, PiQueryType.update);
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.trace('SQL> ', sql.replace(/\s+/g, ' '));
         const results: QueryResult = await this._executeQuery(PiQueryType.update, sql, params);
         return results.affectedRows;
     }
@@ -134,7 +131,6 @@ export abstract class PiDatabase {
     async delete(sql: string, params?: any): Promise<any> {
         _assertSql('delete', sql, PiQueryType.delete);
         [sql, params] = this._parseNamedParams(sql, params);
-        this._logger.trace('SQL> ', sql.replace(/\s+/g, ' '));
         const results: QueryResult = await this._executeQuery(PiQueryType.delete, sql, params);
         return results.affectedRows;
     }
@@ -152,22 +148,34 @@ export abstract class PiDatabase {
 
     /** Allows named parameters */
     protected _parseNamedParams(sql: string, params: any): [string, any] {
+        let realParams = params;
         const isArr = Array.isArray(params);
         sql = sql.trim();
         // Skip bulk inserts (array of arrays) or empty arrays
         if (params && (!isArr || params.length && !Array.isArray(params[0]))) {
             if (isArr)
                 params = Object.assign({}, ...params);
-            sql = sql.replace(/:([a-z_][\w.]*)/gi, (p, id) => {
-                let val = getValue(params, id);
+            realParams = [];
+            sql = sql.replace(/:([a-z_][\w.]*)/gi, (paramNameWColon, paramName) => {
+                let val = getValue(params, paramName);
                 if (val === undefined) {
-                    this._logger.warn(`WARN: SQL Parameter '${p}' not defined. Using null`);
+                    this._logger.warn(`WARN: SQL Parameter '${paramNameWColon}' not defined. Using null`);
                     val = null;
                 }
-                return this.escape(val);
+                if (!Array.isArray(val))
+                    val = [val];
+                realParams.push(...val);
+                return val.map((v: any) => '?').join(',');
             });
         }
-        return [sql, params];
+        if ((this._logger as any)._level >= LogLevel.TRACE) {
+            let i = 0;
+            this._logger.trace(`SQL> ${sql
+                .replace(/\s+/g, ' ')
+                .replace(/\?/g, p => this.escape(realParams[i++]))
+                }`);
+        }
+        return [sql, realParams];
 
         function getValue(obj: any, prop: string) {
             let val = obj;
