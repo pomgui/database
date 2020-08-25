@@ -51,7 +51,7 @@ export abstract class PiDatabase {
         let results: QueryResult;
         try {
             results = await this._executeQuery(PiQueryType.select, sql, params as any);
-            this._logger.trace(`SQL> ${Date.now() - start}ms.`);
+            this._logger.debug(`SQL> ${Date.now() - start}ms.`);
         } catch (err) {
             this._logger.error(`SQL> ERR:`, err);
             throw err;
@@ -151,6 +151,7 @@ export abstract class PiDatabase {
         let realParams = params;
         const isArr = Array.isArray(params);
         sql = sql.trim();
+        const useLiteral = /^execute\s+block/i.test(sql);
         // Skip bulk inserts (array of arrays) or empty arrays
         if (params && (!isArr || params.length && !Array.isArray(params[0]))) {
             if (isArr)
@@ -162,18 +163,27 @@ export abstract class PiDatabase {
                     this._logger.warn(`WARN: SQL Parameter '${paramNameWColon}' not defined. Using null`);
                     val = null;
                 }
-                if (!Array.isArray(val))
-                    val = [val];
-                realParams.push(...val);
-                return val.map((v: any) => '?').join(',');
+                // Literals MUST be used in execute block/procedure statements
+                if (useLiteral) {
+                    return this.escape(val);
+                } else {
+                    if (!Array.isArray(val))
+                        val = [val];
+                    realParams.push(...val);
+                    return val.map((v: any) => '?').join(',');
+                }
             });
         }
-        if ((this._logger as any)._level >= LogLevel.TRACE) {
-            let i = 0;
-            this._logger.trace(`SQL> ${sql
-                .replace(/\s+/g, ' ')
-                .replace(/\?/g, p => this.escape(realParams[i++]))
-                }`);
+        if ((this._logger as any)._level >= LogLevel.DEBUG) {
+            const sqlLog = sql.replace(/\s+/g, ' ');
+            if ((this._logger as any)._level >= LogLevel.TRACE) {
+                this._logger.trace(`SQL> ${sqlLog}\nParams> ${JSON.stringify(realParams)}`);
+            } else {
+                let i = 0;
+                this._logger.debug(`SQL> ${sqlLog
+                    .replace(/\?/g, p => this.escape(realParams[i++]))
+                    }`);
+            }
         }
         return [sql, realParams];
 

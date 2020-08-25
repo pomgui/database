@@ -30,12 +30,12 @@ export class PiMySqlDatabase extends PiDatabase {
 
     commit(): Promise<void> {
         return P(this._db, 'commit')
-            .then(() => this._logger.trace('committed'));
+            .then(() => this._logger.debug('committed'));
     }
 
     rollback(): Promise<void> {
         return P(this._db, 'rollback')
-            .then(() => this._logger.trace('rollback'));
+            .then(() => this._logger.debug('rollback'));
     }
 
     protected async _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {

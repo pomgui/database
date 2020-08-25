@@ -33,13 +33,13 @@ export class PiFirebirdDatabase extends PiDatabase {
 
     commit(): Promise<void> {
         return P(this._db.currTransac, 'commit')
-            .then(() => { this._logger.trace('committed'); delete this._db.currTransac });
+            .then(() => { this._logger.debug('committed'); delete this._db.currTransac });
     }
 
     rollback(): Promise<void> {
         if (this._db)
             return P(this._db.currTransac, 'rollback')
-                .then(() => { this._logger.trace('rollback'); delete this._db.currTransac });
+                .then(() => { this._logger.debug('rollback'); delete this._db.currTransac });
         else return Promise.reject('There\'s no database');
     }
 
