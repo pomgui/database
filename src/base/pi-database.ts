@@ -58,8 +58,15 @@ export abstract class PiDatabase {
         }
 
         // Map rows
-        let list = results.rows
-            && results.rows.map((r: any) => db2json(r, options));
+        let list = results.rows;
+        if (list) {
+            // datasets
+            if (Array.isArray(list))
+                list = list.map((r) => db2json(r, options));
+            else
+                // Single records (e.g. RETURNING INTO)
+                list = [db2json(list, options)];
+        }
         return list;
 
         function db2json(record: any, options: PiQueryOptions) {
