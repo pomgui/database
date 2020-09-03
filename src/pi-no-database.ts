@@ -1,7 +1,6 @@
 import { PiDatabase, QueryResult, PiQueryType } from './base/pi-database';
 
 export class PiNoopDatabase extends PiDatabase {
-    async open(): Promise<void> { }
     escape(value: any): string { return value; }
     async beginTransaction(): Promise<void> { }
     async commit(): Promise<void> { }
