@@ -5,7 +5,7 @@ import { Logger } from "sitka";
 
 interface FBDb extends FB.Database {
     _ID: number;
-    currTransac: FB.Transaction;
+    currTransac?: FB.Transaction;
 }
 
 export class PiFirebirdDatabase extends PiDatabase {
