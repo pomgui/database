@@ -1,4 +1,4 @@
-# Node.js TypeScript Template
+# Database generic library
 
 [![Package Version][package-image]][package-url]
 [![Open Issues][issues-image]][issues-url]
@@ -8,7 +8,7 @@
 [![Dev Dependencies Status][dev-dependencies-image]][dev-dependencies-url]
 [![Commitizen Friendly][commitizen-image]][commitizen-url]
 
-PiDatabase is a generic typescript library that provides a interface to execute the normal operations
+PiDatabase is a generic typescript library that provides an interface to execute the normal operations
 with a client database driver as connect, start transaction, commit, etc. for different database client drivers. (Currently it supports [node-firebird](https://www.npmjs.com/package/node-firebird) and [mysql](https://www.npmjs.com/package/mysql) drivers)
 
 ## Advantages:
