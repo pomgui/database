@@ -1,6 +1,6 @@
 {
   "name": "@pomgui/database",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "Library to handle database connections using Promises and allowing named parameters",
   "keywords": [
     "database",
