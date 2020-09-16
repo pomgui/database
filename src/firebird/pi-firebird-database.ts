@@ -1,51 +1,55 @@
 import { PiDatabase, QueryResult, PiQueryType } from "../base/pi-database";
-import * as FB from 'node-firebird';
-import { P } from "../tools";
+import { promisify } from "../tools";
 import { Logger } from "sitka";
-
-interface FBDb extends FB.Database {
-    _ID: number;
-    currTransac?: FB.Transaction;
-}
 
 export class PiFirebirdDatabase extends PiDatabase {
     private _isOpen = true;
+    private _currTransac: any;
 
     get isOpen() { return this._isOpen; }
 
-    /** @override */
-    escape: (value: any) => string = FB.escape;
-
-    constructor(private _db: FBDb) {
+    constructor(private _db: any /* Firebird.Database */) {
         super();
+        promisify(_db, ['detach', 'transaction', 'query']);
         this._logger = Logger.getLogger('FBdb#' + _db._ID);
+    }
+
+    /** @override */
+    escape(value: any): string {
+        if (Array.isArray(value)) {
+            return value.map(item => this.escape(item)).join(',');
+        } else
+            return this._db.escape(value);
     }
 
     async close(): Promise<void> {
         /* istanbul ignore else  */
         if (this._isOpen)
-            return P(this._db, 'detach').then(() => { this._isOpen = false });
+            return this._db.detach().then(() => { this._isOpen = false });
     }
 
     async beginTransaction(): Promise<void> {
-        this._db.currTransac = await P(this._db, 'transaction');
+        this._currTransac = await this._db.transaction();
+        promisify(this._currTransac, ['commit', 'rollback', 'query']);
     }
 
     commit(): Promise<void> {
-        return P(this._db.currTransac, 'commit')
-            .then(() => { this._logger.debug('committed'); delete this._db.currTransac });
+        return this._currTransac.commit()
+            .then(() => { this._logger.debug('committed'); delete this._currTransac });
     }
 
     rollback(): Promise<void> {
         if (this._db)
-            return P(this._db.currTransac, 'rollback')
-                .then(() => { this._logger.debug('rollback'); delete this._db.currTransac });
-        else return Promise.reject('There\'s no database');
+            return this._currTransac.rollback()
+                .then(() => { this._logger.debug('rollback'); delete this._currTransac });
+        else
+            return Promise.reject('There\'s no database');
     }
 
     protected async _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {
         sql = transformLimitToRows(sql);
-        const result = await P(this._db.currTransac || this._db, 'query', sql, params);
+        const obj = this._currTransac || this._db;
+        const result = await obj.query(sql, params);
 
         switch (type) {
             case PiQueryType.select:

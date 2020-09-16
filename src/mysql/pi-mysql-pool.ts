@@ -1,22 +1,24 @@
 import { PiDatabasePool } from "../base/pi-pool";
 import { PiDatabase } from "../base/pi-database";
-import * as mysql from "mysql";
 import { PiMySqlDatabase } from "./pi-mysql-database";
-import { P } from '../tools'
+import { promisify } from '../tools';
 
 export class PiMySqlPool implements PiDatabasePool {
-    private _pool: mysql.Pool;
+    private _pool: any; // mysql.Pool
     private _ID = 0;
 
-    constructor(private _options: mysql.PoolConfig,
-        /* istanbul ignore next */
-        poolCount = 4) {
-        this._options = Object.assign({ connectionLimit: poolCount }, _options);
-        this._pool = mysql.createPool(this._options);
+    /**
+     * @param _options require('mysql).PoolConfig
+     * @param size Pool size
+     */
+    constructor(private _options: object, size = 10) {
+        this._options = Object.assign({ connectionLimit: size }, _options);
+        this._pool = require('mysql').createPool(this._options);
+        promisify(this._pool, ['getConnection']);
     }
 
     async get(): Promise<PiDatabase> {
-        let db = await P(this._pool, 'getConnection');
+        let db = await this._pool.getConnection();
         if (!db._ID)
             db._ID = ++this._ID;
         return new PiMySqlDatabase(db);

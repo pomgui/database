@@ -5,19 +5,29 @@ export function camel2column(field: string): string {
 }
 
 export function column2camel(col: string, options: PiQueryOptions) {
-    col = col.toLowerCase();
+    // If col includes '.' means it's a object ex. 'a.b.c'
+    if (!col.includes('.'))
+        col = col.toLowerCase();
     return options.map && options.map[col] ||
         col.replace(/_(\w)/g, (g, firstLetter) => firstLetter.toUpperCase());
 }
 
-export function P(obj: any, meth: string, ...args: any[]): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const f = obj[meth];
-        f.call(obj, ...args, function (err: any, data: any) {
-            if (err) reject(err);
-            else resolve(data);
+function promisifyMethod(method: Function, obj: any): Function {
+    return function promisedMethod(...args: any[]): Promise<any> {
+        return new Promise((resolve, reject) => {
+            method.call(obj, ...args, (err: any, data: any) => {
+                if (err) reject(err);
+                else resolve(data);
+            });
         });
-    });
+    };
+}
+
+export function promisify(obj: any, methods: string[]): void {
+    for (const method of methods) {
+        const f = obj[method];
+        obj[method] = promisifyMethod(f, obj);
+    }
 }
 
 export function jsonSetValue(obj: any, fieldPath: string, value: any, onlyUndefined: boolean = false) {
