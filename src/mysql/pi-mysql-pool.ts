@@ -1,7 +1,7 @@
 import { PiDatabasePool } from "../base/pi-pool";
 import { PiDatabase } from "../base/pi-database";
 import { PiMySqlDatabase } from "./pi-mysql-database";
-import { promisify } from '../tools';
+import { promisifyAll } from '../tools';
 
 export class PiMySqlPool implements PiDatabasePool {
     private _pool: any; // mysql.Pool
@@ -14,7 +14,7 @@ export class PiMySqlPool implements PiDatabasePool {
     constructor(private _options: object, size = 10) {
         this._options = Object.assign({ connectionLimit: size }, _options);
         this._pool = require('mysql').createPool(this._options);
-        promisify(this._pool, ['getConnection']);
+        promisifyAll(this._pool, ['getConnection']);
     }
 
     async get(): Promise<PiDatabase> {

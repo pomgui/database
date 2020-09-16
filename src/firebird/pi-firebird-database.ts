@@ -1,18 +1,17 @@
 import { PiDatabase, QueryResult, PiQueryType } from "../base/pi-database";
-import { promisify } from "../tools";
+import { promisifyAll } from "../tools";
 import { Logger } from "sitka";
 
 export class PiFirebirdDatabase extends PiDatabase {
-    private _isOpen = true;
     private _currTransac: any;
-
-    get isOpen() { return this._isOpen; }
 
     constructor(private _db: any /* Firebird.Database */) {
         super();
-        promisify(_db, ['detach', 'transaction', 'query']);
-        this._logger = Logger.getLogger('FBdb#' + _db._ID);
+        promisifyAll(this._db, ['detach', 'transaction', 'query']);
+        this._logger = Logger.getLogger('DB#' + this.id);
     }
+
+    get id(): number { return this._db._ID; }
 
     /** @override */
     escape(value: any): string {
@@ -24,49 +23,56 @@ export class PiFirebirdDatabase extends PiDatabase {
 
     async close(): Promise<void> {
         /* istanbul ignore else  */
-        if (this._isOpen)
-            return this._db.detach().then(() => { this._isOpen = false });
+        if (this._db.connection._isOpened)
+            return this._db.detach();
     }
 
-    async beginTransaction(): Promise<void> {
-        this._currTransac = await this._db.transaction();
-        promisify(this._currTransac, ['commit', 'rollback', 'query']);
+    beginTransaction(): Promise<void> {
+        return this._db.transaction(null)
+            .then((t: any) => {
+                promisifyAll(this._currTransac = t, ['commit', 'rollback', 'query']);
+            });
     }
 
     commit(): Promise<void> {
         return this._currTransac.commit()
-            .then(() => { this._logger.debug('committed'); delete this._currTransac });
+            .then(() => {
+                this._logger.debug('committed');
+                delete this._currTransac;
+            });
     }
 
     rollback(): Promise<void> {
-        if (this._db)
+        if (this._currTransac)
             return this._currTransac.rollback()
-                .then(() => { this._logger.debug('rollback'); delete this._currTransac });
+                .then(() => {
+                    this._logger.debug('rollback');
+                    delete this._currTransac;
+                });
         else
-            return Promise.reject('There\'s no database');
+            return Promise.reject('No transaction to rollback');
     }
 
-    protected async _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {
+    protected _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {
         sql = transformLimitToRows(sql);
-        const obj = this._currTransac || this._db;
-        const result = await obj.query(sql, params);
-
-        switch (type) {
-            case PiQueryType.select:
-                return { rows: result };
-            case PiQueryType.insert:
-            case PiQueryType.update:
-            case PiQueryType.delete:
-                return { affectedRows: 1 };
-            default:
-                return result &&
-                    /* istanbul ignore next */
-                    { rows: result };
-        }
+        const dbObj = this._currTransac || this._db;
+        return dbObj.query(sql, params)
+            .then((result: any) => {
+                switch (type) {
+                    case PiQueryType.select:
+                        return { rows: result };
+                    case PiQueryType.insert:
+                    case PiQueryType.update:
+                    case PiQueryType.delete:
+                        return { affectedRows: 1 };
+                    default:
+                        return result &&
+                            /* istanbul ignore next */
+                            { rows: result };
+                }
+            });
     }
-
-};
-
+}
 
 /**
  * If the SQL contains {LIMIT offset,size} (mysql syntax), it will be converted to

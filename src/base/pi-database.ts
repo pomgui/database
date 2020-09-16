@@ -25,6 +25,8 @@ export interface QueryResult {
 export abstract class PiDatabase {
     protected _logger: Logger = null as any;
 
+    get id(): number { return 0; }
+
     /**
      * Starts a new transaction that will be finished with a commit or rollback.
      * Only one transaction is allowed per connection in order to be able to 

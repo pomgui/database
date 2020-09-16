@@ -1,4 +1,9 @@
 import { PiQueryOptions } from "./base/pi-database";
+import { Logger } from 'sitka';
+import { promisify } from 'util';
+
+const
+    _logger = Logger.getLogger('tools');
 
 export function camel2column(field: string): string {
     return field.replace(/[A-Z]/g, g => '_' + g.toLowerCase());
@@ -12,21 +17,9 @@ export function column2camel(col: string, options: PiQueryOptions) {
         col.replace(/_(\w)/g, (g, firstLetter) => firstLetter.toUpperCase());
 }
 
-function promisifyMethod(method: Function, obj: any): Function {
-    return function promisedMethod(...args: any[]): Promise<any> {
-        return new Promise((resolve, reject) => {
-            method.call(obj, ...args, (err: any, data: any) => {
-                if (err) reject(err);
-                else resolve(data);
-            });
-        });
-    };
-}
-
-export function promisify(obj: any, methods: string[]): void {
+export function promisifyAll(obj: any, methods: string[]): void {
     for (const method of methods) {
-        const f = obj[method];
-        obj[method] = promisifyMethod(f, obj);
+        obj[method] = promisify(obj[method]).bind(obj);
     }
 }
 

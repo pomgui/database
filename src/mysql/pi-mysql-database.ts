@@ -1,6 +1,6 @@
 import { PiDatabase, QueryResult, PiQueryType } from "../base/pi-database";
 import { Logger } from "sitka";
-import { promisify } from '../tools';
+import { promisifyAll } from '../tools';
 
 export class PiMySqlDatabase extends PiDatabase {
     private _isOpen = true;
@@ -10,7 +10,7 @@ export class PiMySqlDatabase extends PiDatabase {
         super();
         this.escape = _db.escape;
         this._logger = Logger.getLogger('Mysql#' + ((_db as any)._ID || 0));
-        promisify(this._db, ['beginTransaction', 'commit', 'rollback', 'query', 'end'])
+        promisifyAll(this._db, ['beginTransaction', 'commit', 'rollback', 'query', 'end'])
     }
 
     close(): Promise<void> {

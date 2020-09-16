@@ -21,7 +21,7 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "changelog": "conventional-changelog -p angular -u",
-    "clean": "rm -r ./coverage; rm -r ./dist; true",
+    "clean": "{ rm -r ./coverage; rm -r ./dist; } 2>/dev/null; true",
     "clean:all": "npm run clean; rm -r ./node_modules",
     "cover": "nyc npm run test",
     "cover:check": "nyc --check-coverage npm run test",

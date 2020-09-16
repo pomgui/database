@@ -1,7 +1,10 @@
 import { PiDatabasePool } from "../base/pi-pool";
-import { promisify } from "../tools";
+import { promisifyAll } from "../tools";
 import { PiDatabase } from "../base/pi-database";
 import { PiFirebirdDatabase } from "./pi-firebird-database";
+import { Logger } from 'sitka';
+
+const _logger = Logger.getLogger('PiFirebirdPool');
 
 export class PiFirebirdPool implements PiDatabasePool {
     private _pool: any/*Firebird.ConnectionPool*/;
@@ -13,13 +16,15 @@ export class PiFirebirdPool implements PiDatabasePool {
      */
     constructor(options: object, size = 10) {
         this._pool = require('node-firebird').pool(size, options);
-        promisify(this._pool, ['get']);
+        promisifyAll(this._pool, ['get']);
     }
 
-    async get(): Promise<PiDatabase> {
-        let db = await this._pool.get();
-        if (!db._ID)
-            db._ID = ++this._ID;
-        return new PiFirebirdDatabase(db);
+    get(): Promise<PiDatabase> {
+        return this._pool.get()
+            .then((db: any) => {
+                if (!db._ID)
+                    db._ID = ++this._ID;
+                return new PiFirebirdDatabase(db)
+            });
     }
 }
