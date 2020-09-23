@@ -1,4 +1,4 @@
-import { PiDatabase, QueryResult, PiQueryType } from "../base/pi-database";
+import { PiDatabase, QueryResult } from "../base/pi-database";
 import { promisifyAll } from "../tools";
 import { Logger } from "sitka";
 
@@ -53,18 +53,19 @@ export class PiFirebirdDatabase extends PiDatabase {
             return Promise.reject('No transaction to rollback');
     }
 
-    protected _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {
+    protected _executeQuery(sql: string, params: any[]): Promise<QueryResult> {
         sql = transformLimitToRows(sql);
         const dbObj = this._currTransac || this._db;
+        const type = /\w+/.exec(sql)![0].toLowerCase();
         return dbObj.query(sql, params)
             .then((result: any) => {
                 switch (type) {
-                    case PiQueryType.select:
+                    case 'select':
                         return { rows: result };
-                    case PiQueryType.insert:
-                    case PiQueryType.update:
-                    case PiQueryType.delete:
-                        return { affectedRows: 1 };
+                    case 'insert':
+                    case 'update':
+                    case 'delete':
+                        return { affectedRows: 1, rows: result && [result] };
                     default:
                         return result &&
                             /* istanbul ignore next */

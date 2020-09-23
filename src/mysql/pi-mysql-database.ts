@@ -1,9 +1,8 @@
-import { PiDatabase, QueryResult, PiQueryType } from "../base/pi-database";
+import { PiDatabase, QueryResult } from "../base/pi-database";
 import { Logger } from "sitka";
 import { promisifyAll } from '../tools';
 
 export class PiMySqlDatabase extends PiDatabase {
-    private _isOpen = true;
     escape: (value: any) => string = null as any;
 
     constructor(private _db: any /*mysql.Connection*/) {
@@ -37,7 +36,7 @@ export class PiMySqlDatabase extends PiDatabase {
             .then(() => this._logger.debug('rollback'));
     }
 
-    protected async _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {
+    protected async _executeQuery(sql: string, params: any[]): Promise<QueryResult> {
         let result: any = await this._db.query(sql, params);
         if (result[1] && "affectedRows" in result[1])
             // work around when it's a CALL and not a SELECT

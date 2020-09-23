@@ -1,4 +1,4 @@
-import { PiDatabase, QueryResult, PiQueryType } from './base/pi-database';
+import { PiDatabase, QueryResult } from './base/pi-database';
 
 export class PiNoopDatabase extends PiDatabase {
     escape(value: any): string { return value; }
@@ -6,7 +6,7 @@ export class PiNoopDatabase extends PiDatabase {
     async commit(): Promise<void> { }
     async rollback(): Promise<void> { }
     async close(): Promise<void> { }
-    protected async _executeQuery(type: PiQueryType, sql: string, params: any[]): Promise<QueryResult> {
+    protected async _executeQuery(sql: string, params: any[]): Promise<QueryResult> {
         return { affectedRows: 0, insertId: 0, rows: [] };
     }
 };

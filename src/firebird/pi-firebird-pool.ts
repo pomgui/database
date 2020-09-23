@@ -2,10 +2,8 @@ import { PiDatabasePool } from "../base/pi-pool";
 import { promisifyAll } from "../tools";
 import { PiDatabase } from "../base/pi-database";
 import { PiFirebirdDatabase } from "./pi-firebird-database";
-import { Logger } from 'sitka';
 
-const _logger = Logger.getLogger('PiFirebirdPool');
-
+let fire = 'node-';
 export class PiFirebirdPool implements PiDatabasePool {
     private _pool: any/*Firebird.ConnectionPool*/;
     private _ID = 0;
@@ -15,7 +13,7 @@ export class PiFirebirdPool implements PiDatabasePool {
      * @param size Pool size
      */
     constructor(options: object, size = 10) {
-        this._pool = require('node-firebird').pool(size, options);
+        this._pool = require(fire + 'firebird').pool(size, options);
         promisifyAll(this._pool, ['get']);
     }
 

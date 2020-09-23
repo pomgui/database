@@ -10,9 +10,6 @@ export type PiQueryOptions = {
     ignore?: string[];
 }
 
-export enum PiQueryType { select, insert, update, delete, any };
-export const PiQueryTypeStr = ['select', 'insert', 'update', 'delete', 'any query'];
-
 type _PiRecords = Array<{ [colname: string]: any }>;
 
 export interface QueryResult {
@@ -52,15 +49,16 @@ export abstract class PiDatabase {
         const start = Date.now();
         let results: QueryResult;
         try {
-            results = await this._executeQuery(PiQueryType.select, sql, params as any);
-            this._logger.debug(`SQL> ${Date.now() - start}ms.`);
+            results = await this._executeQuery(sql, params as any);
         } catch (err) {
-            this._logger.error(`SQL> ERR:`, err);
+            this._logger.error(`SQL> `, err);
             throw err;
+        } finally {
+            this._logger.debug(`SQL> ${Date.now() - start}ms.`);
         }
 
         // Map rows
-        let list = results.rows;
+        let list = results && results.rows;
         if (list) {
             // datasets
             if (Array.isArray(list))
@@ -82,7 +80,7 @@ export abstract class PiDatabase {
         }
     }
 
-    protected abstract _executeQuery(type: PiQueryType, sql: string, args: any[], returnField?: string): Promise<QueryResult>;
+    protected abstract _executeQuery(sql: string, args: any[], returnField?: string): Promise<QueryResult>;
 
     /**
      * Same as query(), but oriented to return one single record. If the record is not found it shall throw
@@ -103,48 +101,6 @@ export abstract class PiDatabase {
     }
 
     /**
-     * Executes an insert instruction and returns the ID or IDs of the new inserted records.
-     * @param sql 
-     * @param params 
-     */
-    async insert(sql: string, params?: any, returnField?: string): Promise<any | any[]> {
-        _assertSql('insert', sql, PiQueryType.insert);
-        [sql, params] = this._parseNamedParams(sql, params);
-        const results: QueryResult = await this._executeQuery(PiQueryType.insert, sql, params, returnField);
-        if (results.affectedRows == 1)
-            return results.insertId;
-        else {
-            let ids = new Array(results.affectedRows).fill(0)
-                .map((dummy, i) => (results.insertId || 0) + i);
-            return ids;
-        }
-    }
-
-    /**
-     * Executes an update instruction and returns the number of records affected
-     * @param sql 
-     * @param params 
-     */
-    async update(sql: string, params?: any): Promise<any> {
-        _assertSql('update', sql, PiQueryType.update);
-        [sql, params] = this._parseNamedParams(sql, params);
-        const results: QueryResult = await this._executeQuery(PiQueryType.update, sql, params);
-        return results.affectedRows;
-    }
-
-    /**
-     * Executes a delete instruction and returns the number of records affected
-     * @param sql 
-     * @param params 
-     */
-    async delete(sql: string, params?: any): Promise<any> {
-        _assertSql('delete', sql, PiQueryType.delete);
-        [sql, params] = this._parseNamedParams(sql, params);
-        const results: QueryResult = await this._executeQuery(PiQueryType.delete, sql, params);
-        return results.affectedRows;
-    }
-
-    /**
      * Closes the connection to the database
      */
     abstract close(): Promise<void>;
@@ -159,6 +115,7 @@ export abstract class PiDatabase {
     protected _parseNamedParams(sql: string, params: any): [string, any] {
         let realParams = params;
         const isArr = Array.isArray(params);
+        const nullFields: string[] = [];
         sql = sql.trim();
         const useLiteral = /^execute\s+block/i.test(sql);
         // Skip bulk inserts (array of arrays) or empty arrays
@@ -169,7 +126,7 @@ export abstract class PiDatabase {
             sql = sql.replace(/:([a-z_][\w.]*)/gi, (paramNameWColon, paramName) => {
                 let val = getValue(params, paramName);
                 if (val === undefined) {
-                    this._logger.warn(`WARN: SQL Parameter '${paramNameWColon}' not defined. Using null`);
+                    nullFields.push(paramNameWColon);
                     val = null;
                 }
                 // Literals MUST be used in execute block/procedure statements
@@ -193,6 +150,8 @@ export abstract class PiDatabase {
                     .replace(/\?/g, p => this.escape(realParams[i++]))
                     }`);
             }
+            if (nullFields.length)
+                this._logger.warn(`WARN: SQL Parameters [${nullFields.join(',')}] not defined. Using null`);
         }
         return [sql, realParams];
 
@@ -205,10 +164,3 @@ export abstract class PiDatabase {
     }
 
 };
-
-function _assertSql(method: string, sql: string, type: PiQueryType): void {
-    if (process.env.NODE_ENV == 'production' || type == PiQueryType.any) return;
-    const expected = PiQueryTypeStr[type];
-    if (!new RegExp(`^\\s*${expected}`, 'i').test(sql))
-        throw new Error(`PiDatabase.${method}: Only "${expected}" sentence supported.`);
-}

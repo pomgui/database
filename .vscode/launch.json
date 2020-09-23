@@ -10,6 +10,7 @@
             "name": "Jasmine Current File",
             "program": "${workspaceFolder}/node_modules/jasmine-ts/lib/index",
             "args": [
+                "-r", "ts-node/register", "--",
                 "--config=spec/support/jasmine.json",
                 "${file}"
             ],
