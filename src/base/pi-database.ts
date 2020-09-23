@@ -3,10 +3,17 @@ import { PiError } from "../pi-error";
 import { Logger, LogLevel } from 'sitka';
 
 export type PiQueryOptions = {
-    // Normally all the columns will be converted to camel-case form. Ex: 'AUTO_UPDATE' will renamed to 'autoUpdate'.
-    // This map can be used for exceptions to that rule. Ex: { 'employee_number': 'employeeId', ... }
+    /** 
+     * Normally all the columns will be converted to camel-case form. 
+     * Ex: 'AUTO_UPDATE' will renamed to 'autoUpdate'.
+     * This map can be used for exceptions to that rule. 
+     * Ex: { 'employee_number': 'employeeId', ... }
+     */
     map?: any;
-    // These column names in the query's result will be ignored and won't be part of the final recordset
+    /** 
+     * These column names in the query's result will be ignored 
+     * and won't be part of the final recordset.
+     */
     ignore?: string[];
 }
 
