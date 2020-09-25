@@ -10,8 +10,8 @@ export function camel2column(field: string): string {
 }
 
 export function column2camel(col: string, options: PiQueryOptions) {
-    // If col includes '.' means it's a object ex. 'a.b.c'
-    if (!col.includes('.'))
+    // If col includes '.' or it has a lowercase char, means it's already formatted by db
+    if (!col.includes('.') && !/[a-z]/.test(col))
         col = col.toLowerCase();
     return options.map && options.map[col] ||
         col.replace(/_(\w)/g, (g, firstLetter) => firstLetter.toUpperCase());
