@@ -15,11 +15,7 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist/",
-    "firebird.*",
-    "mysql.*"
-  ],
+  "files": [ "dist/" ],
   "scripts": {
     "build": "npm run clean && tsc",
     "changelog": "conventional-changelog -p angular -u",
