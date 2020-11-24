@@ -1,6 +1,6 @@
 {
   "name": "@pomgui/database",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Library to handle database connections using Promises and allowing named parameters",
   "keywords": [
     "database",
@@ -15,7 +15,9 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [ "dist/" ],
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "npm run clean && tsc",
     "changelog": "conventional-changelog -p angular -u",
