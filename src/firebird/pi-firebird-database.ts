@@ -13,10 +13,15 @@ export class PiFirebirdDatabase extends PiDatabase {
 
     get id(): number { return this._db._ID; }
 
-    /** @override */
+    /** @override to accept iterators */
     escape(value: any): string {
-        if (Array.isArray(value)) {
-            return value.map(item => this.escape(item)).join(',');
+        if (value !== null && value !== undefined && typeof value != 'string' && typeof value[Symbol.iterator] == 'function') {
+            let result = '', first = true;
+            for (const item of value) {
+                if (!first) result += ','; else first = false;
+                result += this.escape(item);
+            }
+            return result;
         } else
             return this._db.escape(value);
     }
