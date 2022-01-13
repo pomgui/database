@@ -2,11 +2,6 @@
 
 [![Package Version][package-image]][package-url]
 [![Open Issues][issues-image]][issues-url]
-[![Build Status][build-image]][build-url]
-[![Coverage Status][coverage-image]][coverage-url]
-[![Dependencies Status][dependencies-image]][dependencies-url]
-[![Dev Dependencies Status][dev-dependencies-image]][dev-dependencies-url]
-[![Commitizen Friendly][commitizen-image]][commitizen-url]
 
 PiDatabase is a generic typescript library that provides an interface to execute the normal operations
 with a client database driver as connect, start transaction, commit, etc. for different database client drivers. (Currently it supports [node-firebird](https://www.npmjs.com/package/node-firebird) and [mysql](https://www.npmjs.com/package/mysql) drivers)
@@ -21,15 +16,15 @@ with a client database driver as connect, start transaction, commit, etc. for di
 
 ## Installation
 
-Use npm to install pidatabase.
+Use npm to install the library.
 
 ```bash
-npm install pidatabase --save
+npm install @pomgui/database --save
 ```
 
 ## Usage Example
 
-### Firebird usage example
+### Firebird usage example (using @pomgui/database-mysql)
 
 ```typescript
 const options = {
@@ -138,18 +133,8 @@ This will print something like:
 
 
 
-[project-url]: https://github.com/pomgui/pi-database
-[package-image]: https://badge.fury.io/js/typescript-template.svg
-[package-url]: https://badge.fury.io/js/typescript-template
-[issues-image]: https://img.shields.io/github/issues/pomgui/pi-database.svg?style=popout
-[issues-url]: https://github.com/pomgui/pi-database/issues
-[build-image]: https://travis-ci.org/pomgui/pi-database.svg?branch=master
-[build-url]: https://travis-ci.org/pomgui/pi-database
-[coverage-image]: https://coveralls.io/repos/github/pomgui/pi-database/badge.svg?branch=master
-[coverage-url]: https://coveralls.io/github/pomgui/pi-database?branch=master
-[dependencies-image]: https://david-dm.org/pomgui/pi-database/status.svg
-[dependencies-url]: https://david-dm.org/pomgui/pi-database
-[dev-dependencies-image]: https://david-dm.org/pomgui/pi-database/dev-status.svg
-[dev-dependencies-url]: https://david-dm.org/pomgui/pi-database?type=dev
-[commitizen-image]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg
-[commitizen-url]: http://commitizen.github.io/cz-cli
+[project-url]: https://github.com/pomgui/database
+[package-image]: https://badge.fury.io/js/@pomgui%2Fdatabase.svg
+[package-url]: https://www.npmjs.com/package/@pomgui/database
+[issues-image]: https://img.shields.io/github/issues/pomgui/database.svg?style=popout
+[issues-url]: https://github.com/pomgui/database/issues
