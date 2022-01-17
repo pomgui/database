@@ -28,6 +28,7 @@ export interface QueryResult {
 
 export abstract class PiDatabase {
     protected _logger: Logger = null as any;
+    protected _paramChar: '?' | '$' = '?'; // Char used as parameters
 
     get id(): number { return 0; }
 
@@ -125,6 +126,7 @@ export abstract class PiDatabase {
         const nullFields: string[] = [];
         sql = sql.trim();
         const useLiteral = /^execute\s+block/i.test(sql);
+        let i = 1, hasIndex = this._paramChar == '$';
         // Skip bulk inserts (array of arrays) or empty arrays
         if (params && (!isArr || params.length && !Array.isArray(params[0]))) {
             if (isArr)
@@ -143,7 +145,8 @@ export abstract class PiDatabase {
                     if (!Array.isArray(val))
                         val = [val];
                     realParams.push(...val);
-                    return val.map((v: any) => '?').join(',');
+                    return val.map((v: any) => this._paramChar + (hasIndex ? i++ : ''))
+                        .join(',');
                 }
             });
         }
