@@ -1,9 +1,8 @@
-import { PiQueryOptions } from "./base/pi-database";
-import { Logger } from 'sitka';
-import { promisify } from 'util';
+import { PiQueryOptions } from './base/pi-database';
+// import { Logger } from 'sitka';
 
-const
-    _logger = Logger.getLogger('tools');
+// const
+//     _logger = Logger.getLogger('tools');
 
 export function camel2column(field: string): string {
     return field.replace(/[A-Z]/g, g => '_' + g.toLowerCase());
@@ -17,13 +16,7 @@ export function column2camel(col: string, options: PiQueryOptions) {
         col.replace(/_(\w)/g, (g, firstLetter) => firstLetter.toUpperCase());
 }
 
-export function promisifyAll(obj: any, methods: string[]): void {
-    for (const method of methods) {
-        obj[method] = promisify(obj[method]).bind(obj);
-    }
-}
-
-export function jsonSetValue(obj: any, fieldPath: string, value: any, onlyUndefined: boolean = false) {
+export function jsonSetValue(obj: any, fieldPath: string, value: any, onlyUndefined = false) {
     const path = fieldPath.split('.');
     const len = path.length;
     for (let i = 0; i < len - 1; i++) {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { PiDatabase, QueryResult } from './base/pi-database';
 
 export class PiNoopDatabase extends PiDatabase {
@@ -9,4 +11,4 @@ export class PiNoopDatabase extends PiDatabase {
     protected async _executeQuery(sql: string, params: any[]): Promise<QueryResult> {
         return { affectedRows: 0, insertId: 0, rows: [] };
     }
-};
+}

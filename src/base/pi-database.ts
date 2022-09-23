@@ -1,5 +1,5 @@
-import { column2camel, jsonSetValue } from "../tools";
-import { PiError } from "../pi-error";
+import { column2camel, jsonSetValue } from '../tools';
+import { PiError } from '../pi-error';
 import { Logger, LogLevel } from 'sitka';
 
 export type PiQueryOptions = {
@@ -15,7 +15,7 @@ export type PiQueryOptions = {
      * and won't be part of the final recordset.
      */
     ignore?: string[];
-}
+};
 
 type _PiRecords = Array<{ [colname: string]: any }>;
 
@@ -50,7 +50,7 @@ export abstract class PiDatabase {
      * @param options 
      */
     async query(sql: string, params: object, options: PiQueryOptions = {}): Promise<any> {
-        let ignored = new Set((options.ignore || []).map((i: string) => i.toLowerCase()));
+        const ignored = new Set((options.ignore || []).map((i: string) => i.toLowerCase()));
         [sql, params] = this._parseNamedParams(sql, params);
 
         // Execute query
@@ -78,8 +78,8 @@ export abstract class PiDatabase {
         return list;
 
         function db2json(record: any, options: PiQueryOptions) {
-            let result: any = {};
-            for (let col in record) {
+            const result: any = {};
+            for (const col in record) {
                 if (ignored.has(col.toLowerCase()))
                     continue;
                 jsonSetValue(result, column2camel(col, options), record[col]);
@@ -105,7 +105,7 @@ export abstract class PiDatabase {
                 if (list.length != 1)
                     throw PiError.status(406, 'Too many rows');
                 return list[0];
-            })
+            });
     }
 
     /**
@@ -120,19 +120,25 @@ export abstract class PiDatabase {
     abstract escape(value: any): string;
 
     /** Allows named parameters */
-    protected _parseNamedParams(sql: string, params: any): [string, any] {
+    protected _parseNamedParams(sql: string, params: any): [string, any[]] {
         let realParams = params;
         const isArr = Array.isArray(params);
         const nullFields: string[] = [];
         sql = sql.trim();
         const useLiteral = /^execute\s+block/i.test(sql);
-        let i = 1, hasIndex = this._paramChar == '$';
+        let i = 1;
+        const hasIndex = this._paramChar == '$';
         // Skip bulk inserts (array of arrays) or empty arrays
         if (params && (!isArr || params.length && !Array.isArray(params[0]))) {
             if (isArr)
                 params = Object.assign({}, ...params);
             realParams = [];
+            const name2index = new Map<string, string>();
             sql = sql.replace(/:([a-z_][\w.]*)/gi, (paramNameWColon, paramName) => {
+                if (hasIndex && !useLiteral) {
+                    const indexes = name2index.get(paramName);
+                    if (indexes) return indexes;
+                }
                 let val = getValue(params, paramName);
                 if (val === undefined) {
                     nullFields.push(paramNameWColon);
@@ -145,20 +151,29 @@ export abstract class PiDatabase {
                     if (!Array.isArray(val))
                         val = [val];
                     realParams.push(...val);
-                    return val.map((v: any) => this._paramChar + (hasIndex ? i++ : ''))
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const indexes = val.map((v: any) => this._paramChar + (hasIndex ? i++ : ''))
                         .join(',');
+                    if(hasIndex)
+                        name2index.set(paramName, indexes);
+                    return indexes;
                 }
             });
         }
         if ((this._logger as any)._level >= LogLevel.DEBUG) {
-            const sqlLog = sql.replace(/\s+/g, ' ');
+            let sqlLog = sql.replace(/\s+/g, ' ');
             if ((this._logger as any)._level >= LogLevel.TRACE) {
                 this._logger.trace(`SQL> ${sqlLog}\nParams> ${JSON.stringify(realParams)}`);
             } else {
                 let i = 0;
-                this._logger.debug(`SQL> ${sqlLog
-                    .replace(/\?/g, p => this.escape(realParams[i++]))
-                    }`);
+                if (this._paramChar == '$')
+                    sqlLog = sqlLog.replace(/\$(\d+)/g, (g, p) =>
+                        this.escape(realParams[parseInt(p) - 1]));
+                else
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    sqlLog = sqlLog.replace(/\?/g, p =>
+                        this.escape(realParams[i++]));
+                this._logger.debug(`SQL> ${sqlLog}`);
             }
             if (nullFields.length)
                 this._logger.warn(`WARN: SQL Parameters [${nullFields.join(',')}] not defined. Using null`);
@@ -167,10 +182,10 @@ export abstract class PiDatabase {
 
         function getValue(obj: any, prop: string) {
             let val = obj;
-            for (let p of prop.split('.'))
+            for (const p of prop.split('.'))
                 val = val[p];
             return val;
         }
     }
 
-};
+}
